@@ -112,9 +112,7 @@ async def test_request_with_retries_retries_server_errors(monkeypatch: pytest.Mo
 @pytest.mark.asyncio
 @respx.mock
 async def test_request_with_retries_does_not_retry_permanent_client_errors() -> None:
-    route = respx.get("https://example.com/feed.xml").mock(
-        return_value=httpx.Response(404)
-    )
+    route = respx.get("https://example.com/feed.xml").mock(return_value=httpx.Response(404))
     async with httpx.AsyncClient() as client:
         with pytest.raises(httpx.HTTPStatusError):
             await request_with_retries(client, "GET", "https://example.com/feed.xml")

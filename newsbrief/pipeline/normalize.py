@@ -109,6 +109,4 @@ def topic_key(value: str) -> str:
 def tokenize_words(value: str) -> set[str]:
     decomposed = normalize("NFKD", value.casefold())
     without_accents = "".join(character for character in decomposed if not combining(character))
-    return {
-        word for word in re.findall(r"\w+", without_accents) if word not in _STOP_WORDS
-    }
+    return {word for word in re.findall(r"\w+", without_accents) if word not in _STOP_WORDS}

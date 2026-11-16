@@ -1,0 +1,17 @@
+providers:
+  - name: google_news_rss
+    enabled: true
+    priority: 1
+    types: [noticia, edital]
+  - name: curated_rss
+    enabled: true
+    priority: 2
+    types: [noticia, vaga, edital]
+  - name: remotive_jobs
+    enabled: true
+    priority: 1
+    types: [vaga]
+  - name: hn_algolia
+    enabled: true
+    priority: 3
+    types: [noticia, vaga]

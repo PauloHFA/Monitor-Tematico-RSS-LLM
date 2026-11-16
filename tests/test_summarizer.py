@@ -24,9 +24,7 @@ async def test_ollama_summarizes_with_local_api(item: NewsItem) -> None:
         return_value=httpx.Response(200, json={"response": "• Resumo factual"})
     )
     async with httpx.AsyncClient() as client:
-        summary = await OllamaSummarizer(client, "http://ollama:11434/", "modelo").summarize(
-            item
-        )
+        summary = await OllamaSummarizer(client, "http://ollama:11434/", "modelo").summarize(item)
 
     assert summary == "• Resumo factual"
     assert route.called

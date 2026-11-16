@@ -50,7 +50,8 @@ class FakeMessage:
         self.sent: list[str] = []
         self.fail_news_delivery = False
 
-    async def reply_text(self, text: str) -> object:
+    async def reply_text(self, text: str, **kwargs: object) -> object:
+        del kwargs
         self.sent.append(text)
         if self.fail_news_delivery and text.startswith("📰 "):
             return None
@@ -134,9 +135,7 @@ async def test_unauthorized_chat_is_denied(tmp_path) -> None:
     await handle_start(update, _context(services, []))
     await services.http_client.aclose()
 
-    assert update.effective_message.sent == [
-        "Este chat não está autorizado a usar o NewsBrief AI."
-    ]
+    assert update.effective_message.sent == ["Este chat não está autorizado a usar o NewsBrief AI."]
 
 
 async def test_topic_validation_and_missing_active_topic(tmp_path) -> None:
@@ -190,7 +189,7 @@ async def test_empty_topic_and_search_arguments_are_explained(tmp_path) -> None:
     update = _update(42)
 
     await handle_topic(update, _context(services, []))
-    await handle_search(update, _context(services, ["tudo"]))
+    await handle_search(update, _context(services, ["invalido"]))
 
     assert update.effective_message.sent == [
         "Informe um tema. Exemplo: /tema inteligência artificial",

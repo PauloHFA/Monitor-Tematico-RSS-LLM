@@ -1,6 +1,18 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Protocol
+from typing import Literal, Protocol
+
+TopicType = Literal["noticia", "vaga", "edital"]
+LanguageFilter = Literal["pt", "en", "all"]
+
+
+@dataclass(frozen=True, slots=True)
+class SearchFilters:
+    limit: int = 5
+    period_days: int | None = None
+    include_terms: tuple[str, ...] = ()
+    exclude_terms: tuple[str, ...] = ()
+    lang: LanguageFilter = "pt"
 
 
 @dataclass(frozen=True, slots=True)

@@ -24,9 +24,7 @@ def test_main_builds_polling_application_from_environment(monkeypatch) -> None:
     monkeypatch.setattr(
         main_module,
         "build_application",
-        lambda token, services: (
-            app_calls.append((token, services)) or FakeApplication()
-        ),
+        lambda token, services: app_calls.append((token, services)) or FakeApplication(),
     )
 
     main_module.main()
@@ -35,7 +33,7 @@ def test_main_builds_polling_application_from_environment(monkeypatch) -> None:
     assert app_calls[-1] == ("run", None)
     services = app_calls[0][1]
     assert services.http_client is client
-    assert len(services.search._providers) == 1
+    assert len(services.search.providers) == 3
 
 
 def test_main_logs_when_allowlist_is_empty(monkeypatch) -> None:

@@ -1,13 +1,14 @@
 import asyncio
 from dataclasses import dataclass
-from datetime import UTC
+from datetime import UTC, datetime, timedelta
 
 import httpx
 import structlog
 from rapidfuzz.fuzz import ratio
 
 from newsbrief.pipeline.normalize import tokenize_words, topic_key, url_hash
-from newsbrief.providers.base import NewsItem, SearchProvider
+from newsbrief.providers.base import NewsItem, SearchFilters, SearchProvider, TopicType
+from newsbrief.topics.classifier import classify_topic, expand_query
 
 logger = structlog.get_logger(__name__)
 
@@ -16,27 +17,71 @@ logger = structlog.get_logger(__name__)
 class SearchResult:
     items: list[NewsItem]
     failed_sources: list[str]
+    topic_type: TopicType = "noticia"
+    providers_used: tuple[str, ...] = ()
 
 
 class NewsSearchService:
-    def __init__(self, providers: list[SearchProvider], max_results: int = 5) -> None:
+    def __init__(
+        self,
+        providers: list[SearchProvider],
+        max_results: int = 5,
+        *,
+        provider_types: dict[str, tuple[str, ...]] | None = None,
+    ) -> None:
         self._providers = providers
         self._max_results = max_results
+        self._provider_types = provider_types or {}
 
-    async def search(self, query: str) -> SearchResult:
-        provider_results = await asyncio.gather(
-            *(self._search_provider(provider, query) for provider in self._providers)
-        )
+    @property
+    def providers(self) -> list[SearchProvider]:
+        return list(self._providers)
+
+    async def search(
+        self,
+        query: str,
+        *,
+        topic_type: TopicType | None = None,
+        filters: SearchFilters | None = None,
+        expand: bool = False,
+    ) -> SearchResult:
+        resolved_type: TopicType = topic_type or classify_topic(query)
+        active_filters = filters or SearchFilters(limit=self._max_results)
+        queries = expand_query(query, enabled=expand) or [query]
+
+        selected_providers = [
+            provider
+            for provider in self._providers
+            if not self._provider_types
+            or provider.name not in self._provider_types
+            or resolved_type in self._provider_types[provider.name]
+        ]
+        if not selected_providers:
+            selected_providers = list(self._providers)
+
+        tasks = [
+            self._search_provider(provider, q_variant)
+            for provider in selected_providers
+            for q_variant in queries
+        ]
+        provider_results = await asyncio.gather(*tasks)
         items: list[NewsItem] = []
         failures: list[str] = []
         for provider_items, failure in provider_results:
             items.extend(provider_items)
-            if failure is not None:
+            if failure is not None and failure not in failures:
                 failures.append(failure)
 
-        ranked = sorted(items, key=lambda item: _rank(item, query), reverse=True)
+        filtered = _apply_filters(items, active_filters)
+        ranked = sorted(filtered, key=lambda item: _rank(item, query), reverse=True)
         unique = deduplicate_items(ranked)
-        return SearchResult(items=unique[: self._max_results], failed_sources=failures)
+        limit = active_filters.limit if filters is not None else self._max_results
+        return SearchResult(
+            items=unique[:limit],
+            failed_sources=failures,
+            topic_type=resolved_type,
+            providers_used=tuple(p.name for p in selected_providers),
+        )
 
     async def _search_provider(
         self,
@@ -98,3 +143,41 @@ def filter_already_sent(
 
 def make_topic_key(query: str) -> str:
     return topic_key(query)
+
+
+def parse_filter_tokens(raw_filters: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    include: list[str] = []
+    exclude: list[str] = []
+    for token in raw_filters.split():
+        clean = token.strip()
+        if not clean:
+            continue
+        if clean.startswith("-") and len(clean) > 1:
+            exclude.append(clean[1:].casefold())
+        else:
+            include.append(clean.casefold())
+    return tuple(include), tuple(exclude)
+
+
+def _apply_filters(items: list[NewsItem], filters: SearchFilters) -> list[NewsItem]:
+    cutoff: datetime | None = None
+    if filters.period_days is not None and filters.period_days > 0:
+        cutoff = datetime.now(UTC) - timedelta(days=filters.period_days)
+
+    result: list[NewsItem] = []
+    for item in items:
+        if cutoff is not None and item.published_at is not None:
+            pub = (
+                item.published_at
+                if item.published_at.tzinfo is not None
+                else item.published_at.replace(tzinfo=UTC)
+            )
+            if pub < cutoff:
+                continue
+        haystack = f"{item.title} {item.snippet}".casefold()
+        if any(term not in haystack for term in filters.include_terms):
+            continue
+        if any(term in haystack for term in filters.exclude_terms):
+            continue
+        result.append(item)
+    return result

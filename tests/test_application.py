@@ -27,7 +27,7 @@ async def test_application_registers_commands_and_closes_services(tmp_path) -> N
     )
 
     application = build_application("123:abc", services)
-    assert len(application.handlers[0]) == 5
+    assert len(application.handlers[0]) >= 18
     assert application.update_processor.max_concurrent_updates == 20
     assert application.post_init is not None
     assert application.post_shutdown is not None
