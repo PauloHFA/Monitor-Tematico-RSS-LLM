@@ -1,4 +1,4 @@
-# Pendências e Próximos Passos — NewsBrief AI (`newsbrief`)
+# Pendências e Próximos Passos — Monitor-Tematico-RSS-LLM (`newsbrief`)
 
 Documento técnico consolidando as implementações realizadas, o estado validado em testes/análise estática, as evoluções opcionais restantes e o que depende de credenciais, feeds ou decisões fornecidas por você.
 
@@ -48,7 +48,7 @@ Documento técnico consolidando as implementações realizadas, o estado validad
 | **3. Feeds curados em `configs/feeds.yaml`** | Preencher `configs/feeds.yaml` com URLs RSS de notícias, vagas e editais permitidas pelos termos de uso de cada fonte. | Amplia a cobertura além de Google News RSS, Remotive e Hacker News Algolia. |
 | **4. WhatsApp opcional** | Caso ative `CHANNELS=telegram,whatsapp`, fornecer endpoint e token oficiais em `WHATSAPP_API_URL` e `WHATSAPP_API_TOKEN`. | Habilita entrega simultânea no WhatsApp. |
 | **5. Execução em Docker** | Configurar `.env` e executar `docker compose up --build` no ambiente com Docker ativo. | Valida o container em produção/VPS com volume persistente. |
-| **6. Nome e Push no GitHub** | Confirmar se deseja renomear este repositório no padrão do portfólio (ex.: `Assistente-Noticias-Vagas-Telegram`) e fazer `commit`/`push`. | Alinha o projeto aos demais repositórios do seu portfólio. |
+| **6. Sincronização Git** | Repositório remoto renomeado e atualizado em `https://github.com/PauloHFA/Monitor-Tematico-RSS-LLM.git`. | Alinha histórico e documentação ao portfólio. |
 
 ---
 

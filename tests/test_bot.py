@@ -135,7 +135,9 @@ async def test_unauthorized_chat_is_denied(tmp_path) -> None:
     await handle_start(update, _context(services, []))
     await services.http_client.aclose()
 
-    assert update.effective_message.sent == ["Este chat não está autorizado a usar o NewsBrief AI."]
+    assert update.effective_message.sent == [
+        "Este chat não está autorizado a usar o Monitor-Tematico-RSS-LLM."
+    ]
 
 
 async def test_topic_validation_and_missing_active_topic(tmp_path) -> None:

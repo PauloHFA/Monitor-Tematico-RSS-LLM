@@ -716,7 +716,7 @@ async def _is_authorized(update: Any, services: BotServices) -> bool:
     ):
         return True
     logger.warning("unauthorized_chat", chat_id=chat.id)
-    await _reply(update, "Este chat não está autorizado a usar o NewsBrief AI.")
+    await _reply(update, "Este chat não está autorizado a usar o Monitor-Tematico-RSS-LLM.")
     return False
 
 

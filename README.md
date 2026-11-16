@@ -1,14 +1,14 @@
-# NewsBrief AI
+# Monitor-Tematico-RSS-LLM (`newsbrief`)
 
-Bot assíncrono do Telegram que busca notícias em RSS pelo tema escolhido e entrega
-resumos curtos usando Ollama local. Esta primeira versão cobre notícias; vagas,
-editais, favoritos, agendamentos e WhatsApp ficam para etapas futuras.
+Bot assíncrono do Telegram que monitora e busca notícias, vagas e editais em feeds RSS e APIs públicas pelo tema escolhido, classifica e filtra resultados, deduplica por tema/usuário e entrega resumos estruturados usando Ollama local, OpenAI ou Gemini (com entrega opcional no WhatsApp e agendamentos recorrentes).
+
+> **Identificadores internos preservados:** o pacote Python (`newsbrief`), a distribuição (`newsbrief-ai`), o script CLI (`newsbrief`) e o esquema SQLite (`newsbrief.db`) permanecem inalterados para manter compatibilidade de imports e execução.
 
 ## Requisitos
 
 - Python 3.11+ (o Dockerfile usa Python 3.12).
 - Um bot criado pelo [@BotFather](https://t.me/BotFather).
-- [Ollama](https://ollama.com/) instalado e um modelo baixado, por exemplo:
+- [Ollama](https://ollama.com/) instalado e um modelo baixado (ou chave `OPENAI_API_KEY` / `GEMINI_API_KEY`), por exemplo:
 
   ```powershell
   ollama pull qwen2.5:7b
@@ -16,10 +16,9 @@ editais, favoritos, agendamentos e WhatsApp ficam para etapas futuras.
 
 ## Configuração local
 
-Instale o [uv](https://docs.astral.sh/uv/getting-started/installation/) e copie o
-arquivo de exemplo para `.env`:
-
 ```powershell
+git clone https://github.com/PauloHFA/Monitor-Tematico-RSS-LLM.git
+cd Monitor-Tematico-RSS-LLM
 Copy-Item .env.example .env
 ```
 
@@ -64,15 +63,18 @@ feeds:
 ```
 
 Use somente RSS/APIs cuja política permita esse acesso e confirme os termos de uso
-e a disponibilidade de cada feed antes de ativá-lo. O NewsBrief AI não faz scraping
+e a disponibilidade de cada feed antes de ativá-lo. O Monitor-Tematico-RSS-LLM não faz scraping
 de páginas de artigos.
 
 ## Comandos
 
-- `/start` ou `/ajuda`: instruções do MVP.
-- `/tema <assunto>`: define o tema ativo e inicia uma busca.
-- `/buscar`: busca somente itens ainda não entregues para o tema ativo.
-- `/atual`: mostra o tema ativo.
+- `/start`, `/menu` ou `/ajuda`: instruções e menu interativo.
+- `/tema <assunto>`: define o tema ativo e inicia uma busca (ou envie texto livre se habilitado).
+- `/buscar [tudo]`: busca apenas itens novos (ou reenvia todos com `tudo`).
+- `/atual`, `/historico`, `/salvar [apelido]`, `/temas`, `/remover <n>`: tema ativo, histórico e favoritos.
+- `/tipo <noticia|vaga|edital>`, `/expandir on|off`, `/limite <1-10>`, `/periodo <Nd>`, `/filtro <termos>`, `/idioma <pt|en|all>`: parâmetros e filtros.
+- `/modo resumo-unico|individual`, `/config texto_livre on|off`, `/agendar <hh:mm> [dias]`, `/agendamentos`, `/pausar`, `/retomar`, `/fuso <zona>`.
+- `/fontes`, `/status`, `/estatisticas`, `/autorizar <id>`, `/revogar <id>`, `/apagar_meus_dados`.
 
 O tema é limitado a 120 caracteres. Cada busca retorna no máximo o limite configurado
 em `MAX_RESULTS` (de 1 a 10; padrão 5), e pode não encontrar itens novos. Se uma fonte
